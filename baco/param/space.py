@@ -13,7 +13,7 @@ import torch
 import baco.param.constraints as constraints
 from baco.param.chain_of_trees import ChainOfTrees, Node, Tree
 from baco.param.data import DataArray
-from baco.param.parameters import RealParameter, IntegerParameter, OrdinalParameter, CategoricalParameter, PermutationParameter
+from baco.param.parameters import RealParameter, IntegerParameter, OrdinalParameter, CategoricalParameter, PermutationParameter, SelectionParameter
 
 
 class Space:
@@ -54,15 +54,18 @@ class Space:
         self.number_parameters = []
         self.categorical_parameters = []
         self.permutation_parameters = []
+        self.selection_parameters = []
         self.real_parameters = []
         self.conditional_space = False
         self.constraints = []
 
         self.parse_input_parameters(settings["input_parameters"])
 
+        print("names, indices, dimension")
         self.parameter_names = [parameter.name for parameter in self.parameters]
         self.parameter_indices = {parameter_name: i for i, parameter_name in enumerate(self.parameter_names)}
         self.dimension = len(self.parameters)
+        print("has real, only real")
         self.has_real_parameters = ("real" in self.parameter_types)
         self.only_real_parameters = (len(self.real_parameters) == self.dimension)
         if self.has_real_parameters:
@@ -77,9 +80,16 @@ class Space:
         self.normalize_priors = True
 
         if self.conditional_space:
+            print("chain of trees ")
+
+            print("get order")
             cot_order, tree_orders = self.get_cot_order()
+            print("create object")
             self.chain_of_trees = ChainOfTrees(cot_order, len(cot_order) == self.dimension)
+            print("create chain of trees ")
             self.create_chain_of_trees(tree_orders)
+
+            print("finished")
 
             # cot_parameters are the constraints which are part of the chain of trees. Floats and variables which have dependencies with float parameters are not.
             self.cot_parameters = [self.parameters[i] for i in range(self.dimension) if i in cot_order]
@@ -118,7 +128,8 @@ class Space:
             param_constraints = None
             if "constraints" in param:
                 self.conditional_space = True
-                param_constraints = param["constraints"]
+                # TODO: remove space characters from constraints  (todo check if this will break stuff)
+                param_constraints = [constraint.replace(" ", "") for constraint in param["constraints"]]
                 self.constraints.extend(param_constraints)
 
             param_dependencies = None
@@ -130,6 +141,11 @@ class Space:
                 transform = param["transform"]
             else:
                 transform = "none"
+
+            if "length" in param:
+                length = param["length"]
+            else:
+                length = "none"
 
             if param_type == "real":
                 param_min, param_max = param["values"]
@@ -220,6 +236,25 @@ class Space:
                 self.parameter_types.append("permutation")
                 self.parameter_python_types.append("int")
 
+            elif param_type == "selection":
+                n_elements = param["values"][0]
+                param_values = param["values"]
+                parametrization = param["parametrization"]
+                param_obj = SelectionParameter(
+                    name=param_name,
+                    n_elements=n_elements,
+                    values=param_values,
+                    default=param_default,
+                    parametrization=parametrization,
+                    constraints=param_constraints,
+                    dependencies=param_dependencies,
+                    length=length,
+                )
+                self.parameters.append(param_obj)
+                self.selection_parameters.append(param_obj)
+                self.parameter_types.append("selection")
+                self.parameter_python_types.append("int")
+
     def create_chain_of_trees(self, tree_orders: List[List[int]]):
         """
         Instantiates a chain of trees
@@ -267,7 +302,10 @@ class Space:
         )
         if len(possible_child_values) > 0:
             if level == len(tree_order) - 2:
+
                 for idx, child_value in enumerate(possible_child_values):
+
+                    # print(f"child value: {child_value}")
                     child_node = Node(
                         node,
                         child_value,

@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from itertools import permutations
+from itertools import permutations, product
 from typing import Any, List, Optional, Union, Tuple
 
 import numpy as np
@@ -9,7 +9,7 @@ from scipy.stats import truncnorm
 
 
 # PARAMETERS CLASSES ##################
-# The input search space supports 5 types of parameters: Categorical, Ordinal, Integer, Real ad Permutation.
+# The input search space supports 6 types of parameters: Categorical, Ordinal, Integer, Real, Permutation and Selection 
 class Parameter:
     """
     Parent class of the different parameters.
@@ -485,10 +485,14 @@ class CategoricalParameter(Parameter):
              - constraints: list of constraints as evaluable strings
              - dependencies: list of strings encoding dependencies
         """
+
         if dependencies is None:
             dependencies = []
         if constraints is None:
             constraints = []
+
+        print(f"values: {values}")
+        print(f"default: {default}")
         Parameter.__init__(self, name, values.index(default), constraints, dependencies)
         self.values = torch.arange(len(values))
         self.string_values = values
@@ -651,6 +655,13 @@ class PermutationParameter(Parameter):
         self.distribution = torch.ones(len(self.values)) / len(self.values)
         self.val_indices = {i.item(): i for i in self.values}  # from internal to index (which are the same for permutations)
 
+        print(f"values: {self.values}")
+        print(f"permutation_values: {self.permutation_values}")
+        print(f"string_values: {self.string_values}")
+        print(f"n_elemens: {self.string_values}")
+        print(f"parametrization: {self.parametrization}")
+        print(f"distribution: {self.distribution}")
+
     def parametrize(self, data: List[int]) -> Tuple[List[str], List[List[float]]]:
 
         """
@@ -802,6 +813,350 @@ class PermutationParameter(Parameter):
             return self.string_values[intermediate_value]
         if to_type == "original":
             return self.permutation_values[intermediate_value]
+        elif to_type == "01":
+            return intermediate_value / (self.get_size() - 1)
+        else:
+            return intermediate_value
+
+
+# todo adjust description
+class SelectionParameter(Parameter):
+    """
+    This class represents selection variables in different parametrizations.
+
+    When using GPs, each permutation variable is parametrized by a number of other variables.
+
+    For ease of notation, in the following, let n be the number of items in the permutation and
+    let sigma(i) be the rank of item i, such that if sigma(i) = i for all i, then it is the
+    identity permutation.
+
+    Parametrizations:
+        - Spearman:
+            The permutation is represented by n variables x_i = sigma(i), i.e., x_i represents
+            the position of item i in the permutation. This will yield an exponential kernel with
+            Spearman distance.
+
+        - Kendall:
+            The permutation is represented by n(n-1)/2 variables x_ij such that x_ij (i < j)
+            is equal to 1 iff sigma(i) < sigma(j). This will yield an exponential kernel with
+            the Kendall distance, also called the Mallows kernel.
+
+        - Hamming:
+            The permutation is represented by n categorical variables x_i = sigma(i). Hence,
+            on paper same as the Spearman representation but using categorical variables will
+            instead yield the exponential kernel with Hamming distance.
+
+    """
+
+    def __init__(
+            self,
+            name: str,
+            n_elements: int,
+            values: List[str],
+            default: List[int],
+            parametrization: str,
+            length: Tuple[int, int],
+            constraints: Optional[List[str]] = None,
+            dependencies: Optional[List[str]] = None,
+    ):
+        """
+        Initialization method. The possible values for this parameter are defined by the list values.
+             - name: variable name
+             - n_elements: number of elements in the permutation
+             - default: default value.
+             - parametrization: how to internally parametrize the permutation. Also defines which kernel is used.
+             - constraints: list of constraints as evaluable strings
+             - dependencies: list of strings encoding dependencies
+
+        Note that permutations are tuples
+        """
+        if dependencies is None:
+            dependencies = []
+        if constraints is None:
+            constraints = []
+        self.n_elements = n_elements
+
+        self.length = length
+        self.values = values
+
+        # print("\n")
+        # print("Selection parametr init\n")
+
+        # change this to other values 
+
+        # todo: use length [min, max]
+
+        # all permutations including partial sums (1 - 6)
+        # select from list of values
+
+        # self.permutation_values: List[tuple] = [p for p in permutations([x for x in range(self.n_elements)])]
+
+        # for x in range(self.length)
+        
+        self.selection_values: List[tuple] = []
+
+        # print(f"length: {self.length}")
+
+
+        # groups of selection  
+        # A: 0 1 2 3
+        # B: 0 1 2 3
+        # C: 0 1 2 3
+
+        # how to combine? 
+        # combine all and filter duplicates? 
+
+        # length 1
+        # A: 0 1
+        # B: 0 1
+        # C: 0 1
+        # A, B, C
+
+        # length 2
+        # A: 0 1 2
+        # B: 0 1 2
+        # C: 0 1 2
+        # permutations: 
+        # A: 2 -> AA
+        # A: 1 -> AB, AC, BA, CA
+        # A: 0 -> BC, CB
+        # B: 2 -> BB
+        # C: 2 -> CC
+
+        # length 3
+        # A: 0 1 2 3
+        # B: 0 1 2 3
+        # C: 0 1 2 3
+        # permutations:  
+        # A: 3 -> AAA
+        # A: 2 -> AAB, AAC, ABA, ACA, BAA, CAA
+        # A: 1 -> ABC, ACB, BAC, BCA, CAB, CBA
+        # A: 0 -> BBC, BCB, CBB, CBC, CCB, BBB, CCC
+
+        # A: List[str] = ['A', 'A', 'A']
+        # B: List[str] = ['B', 'B', 'B']
+        # C: List[str] = ['C', 'C', 'C']
+        # perms = permute(A, B, C)
+
+        # A: List[str] = ['A', 'A']
+        # B: List[str] = ['B']
+        # C: List[str] = ['C']
+
+
+        # import itertools
+
+        # vals: List[str] = ['A', 'B', 'C']
+        # length = 4
+
+        # permutations = []
+        # for perm in itertools.product(my_list, repeat=4):
+        #     permutations.append(perm)
+
+        # print(permutations)
+
+        # print("Test")
+
+
+        # vals: List[int] = [1, 2]
+# 
+        # selections = []
+        # for sel in permutations(vals, length[1]):
+        #     selections.append(sel)
+
+        # print("selections: ")
+        # [print(x) for x in selections]
+
+
+        # selections = []
+        
+        # print("build selecton values")
+        for x in range(length[0], length[1] + 1):
+            self.selection_values.extend(product(self.values, repeat=x))
+        # print(f"Finished: {len(self.selection_values)} elements")
+
+        # print("seleciton_values: ")
+        # for value in self.selection_values:
+            # print(f"type: {type(value)}")
+            # print(value[0])
+            # print(f"tuple length: {len(value)}")
+            # print(f"split: {str(value).split(',')}")
+            # print(f"len: {len(value.split(','))}")
+
+
+        self.selection_values = [x[0] if len(str(x).split(',')) == 1 else x for x in self.selection_values]
+
+        # todo add selection part
+        # we want to allow permutations including AAA, BBB, CCB
+
+        self.string_values = [f"{s}" for s in self.selection_values]
+        # print("torch.arange")
+        self.values = torch.arange(len(self.selection_values))
+        self.default_index = None
+        if default:
+            self.default_index = self.selection_values.index(tuple(default))
+        Parameter.__init__(self, name, self.default_index, constraints, dependencies)
+
+        self.parametrization = parametrization.lower()
+        self.distribution = torch.ones(len(self.values)) / len(self.values)
+        self.val_indices = {i.item(): i for i in self.values}  # from internal to index (which are the same for permutations)
+
+
+    def parametrize(self, data: List[int]) -> Tuple[List[str], List[List[float]]]:
+
+        """
+        Provides a parametrization representation of the variable.
+
+        Input:
+             - data: the values of the parameter
+        :returns: a list of names for the new variables
+                  a list of values. The outer list is over the new variables, and the inner list over the data points.
+        """
+
+        print("parameterizei?")
+
+        if self.parametrization == "spearman":
+            return (
+                [f"{self.name}_{i}" for i in range(self.n_elements)],
+                [
+                    [
+                        self.selection_values[int(d)].index(i) / self.n_elements
+                        for i in range(self.n_elements)
+                    ]
+                    for d in data
+                ],
+            )
+
+        elif self.parametrization == "kendall":
+            return (
+                [
+                    f"{self.name}_{i}_{j}"
+                    for i in range(self.n_elements)
+                    for j in range(i + 1, self.n_elements)
+                ],
+                [
+                    [
+                        self.selection_values[int(d)][i]
+                        < self.selection_values[int(d)][j]
+                        for i in range(self.n_elements)
+                        for j in range(i + 1, self.n_elements)
+                    ]
+                    for d in data
+                ],
+            )
+
+        elif self.parametrization == "hamming":
+            return (
+                [
+                    f"{self.name}_{i}_{j}"
+                    for i in range(self.n_elements)
+                    for j in range(self.n_elements)
+                ],
+                [
+                    [self.selection_values[int(d)][i] == j
+                     for i in range(self.n_elements)
+                     for j in range(self.n_elements)
+                     ]
+                    for d in data
+                ],
+            )
+
+        elif self.parametrization == "naive":
+            return (
+                [f"{self.name}_{i}" for i in self.values],
+                [[int(int(d) == i) for i in self.values] for d in data],
+            )
+
+        else:
+            raise Exception(
+                f"Incorrect permutation parametrization: {self.parametrization}"
+            )
+
+    def sample(self, size=1, uniform=False) -> torch.Tensor:
+        """
+        Select at random following the distribution given in the json.
+
+        Input:
+             - size: the number of sampled random points
+        Returns:
+            - a random number.
+        """
+        samples = np.random.choice(self.values, size=size)
+        samples = torch.tensor(samples)
+        return samples
+
+    def pdf(self, x_idx: torch.Tensor) -> float:
+        """
+        Compute the probability of a given X under the prior distribution of the parameter.
+        Returns:
+        - the probability of X
+        """
+        return self.distribution[x_idx.to(dtype=torch.long)]
+
+    def get_default(self) -> int:
+        return self.default_index
+
+    def get_size(self) -> int:
+        return len(self.values)
+
+    def get_discrete_size(self) -> int:
+        return self.get_size()
+
+    def get_discrete_values(self) -> List[int]:
+        return self.get_values()
+
+    def get_values(self) -> List[int]:
+        return self.values
+
+    def get_permutation_values(self) -> List[Tuple[int]]:
+        return self.selection_values
+
+    def get_int_value(self, selection: Tuple[int]) -> int:
+        return self.selection_values.index(selection)
+
+    def get_permutation_value(self, idx_value: int) -> Tuple[int]:
+        return self.selection_values[int(idx_value)]
+
+    def string_to_int(self, string: str) -> int:
+        if string[0] == "(":
+            return self.get_int_value(tuple(int(x) for x in string[1:-1].split(",")))
+        else:
+            return self.get_int_value(tuple(int(x) for x in string.split(",")))
+
+    def int_to_string(self, idx_value: int) -> str:
+        return f"{tuple(self.get_permutation_value(idx_value))}"
+
+    # TODO: adjust this -> create internal representation using ints (enumeration of input strings)
+    # (A, B, C) -> (0, 1, 2)
+    # create dict to convert? 
+    def convert(
+            self,
+            input_value: Union[str, float, tuple],
+            from_type: str,
+            to_type: str,
+    ):
+        """
+        converts a single value between formats
+
+        Inputs:
+            - data: a single value
+            - from_type: the format of the input ("string", "internal", "original", "01")
+            - to_type: the format of the output ("string", "internal", "original", "01")
+        Returns:
+            - the converted value
+        """
+        if from_type == "string":
+            intermediate_value = self.string_values.index(input_value)
+        elif from_type == "original":
+            intermediate_value = self.selection_values.index(input_value)
+        elif from_type == "01":
+            intermediate_value = int(np.floor(input_value * self.get_size() * 0.999999))
+        else:
+            intermediate_value = int(input_value)
+
+        if to_type == "string":
+            return self.string_values[intermediate_value]
+        if to_type == "original":
+            return self.selection_values[intermediate_value]
         elif to_type == "01":
             return intermediate_value / (self.get_size() - 1)
         else:

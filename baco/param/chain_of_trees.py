@@ -6,6 +6,8 @@ import pickle
 from typing import Optional, Dict, List, Any
 import torch
 from torch import Tensor
+import concurrent.futures
+                                                          
 
 from baco.param.parameters import Parameter
 import itertools
@@ -66,17 +68,19 @@ class Node:
                 self.children[0].parameter_name
             )
             ]
+
             child_val_idxs = [child.val_idx for child in self.children]
             child_probability = self.probability / len(self.children)
             prior_weighted_probability_sum = np.sum(
                 [child_parameter.distribution[val_idx] for val_idx in child_val_idxs]
             )
+
+            # WARNING: This is slow 
             child_prior_weighted_probabilities = [
-                self.prior_weighted_probability
-                * child_parameter.distribution[val_idx]
-                / prior_weighted_probability_sum
+                self.prior_weighted_probability * child_parameter.distribution[val_idx] / prior_weighted_probability_sum
                 for val_idx in child_val_idxs
             ]
+
             for idx, child in enumerate(self.children):
                 child.probability = child_probability
                 child.prior_weighted_probability = child_prior_weighted_probabilities[

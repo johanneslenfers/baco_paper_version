@@ -299,7 +299,8 @@
                 "categorical",
                 "real",
                 "integer",
-                "permutation"
+                "permutation",
+                "selection"
               ],
               "type": "string"
             },
@@ -351,6 +352,10 @@
                   }
                 ]
               },
+              "type": "array"
+            },
+            "length": {
+              "description": "min and max length of selection sequence",
               "type": "array"
             }
           },
