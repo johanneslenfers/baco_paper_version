@@ -19,7 +19,7 @@ except:
 
 
 def selection(X):
-
+    '''
     rewriting: str = X["rewriting"]
     # print("rewriting: " + str(rewriting))
 
@@ -35,13 +35,16 @@ def selection(X):
             cost += 0
     
     cost *= 1/(''.join(rewriting).find('A') + 2)
+    cost += X["x"]
 
     valid = True
 
     # fake constraint 
     # if ''.join(rewriting).count('C') > 1:
     #     valid = False
-
+    '''
+    cost = X["x"]
+    valid = True
     return {"runtime": cost, "Valid": valid}
 
 

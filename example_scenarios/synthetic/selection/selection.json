@@ -26,9 +26,12 @@
         "parameter_type": "selection",
         "values": ["A", "B", "C"],
         "length": [1, 5],
-        "constraints": ["rewriting_NB<=0", "rewriting_0 = A", "rewriting_iC=3,4"],
-        "dependencies": [],
         "parametrization" : "kendall"
+    },
+    "x": {
+      "parameter_type": "real",
+      "values" : [0, 10],
+      "parameter_default" : 5
     }
   }
 }
