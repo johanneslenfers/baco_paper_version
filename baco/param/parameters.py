@@ -655,12 +655,14 @@ class PermutationParameter(Parameter):
         self.distribution = torch.ones(len(self.values)) / len(self.values)
         self.val_indices = {i.item(): i for i in self.values}  # from internal to index (which are the same for permutations)
 
+        '''
         print(f"values: {self.values}")
         print(f"permutation_values: {self.permutation_values}")
         print(f"string_values: {self.string_values}")
         print(f"n_elemens: {self.string_values}")
         print(f"parametrization: {self.parametrization}")
         print(f"distribution: {self.distribution}")
+        '''
 
     def parametrize(self, data: List[int]) -> Tuple[List[str], List[List[float]]]:
 
@@ -741,6 +743,7 @@ class PermutationParameter(Parameter):
         """
         samples = np.random.choice(self.values, size=size)
         samples = torch.tensor(samples)
+        print("rnd-permutations: " + str(samples))
         return samples
 
     def pdf(self, x_idx: torch.Tensor) -> float:
@@ -810,13 +813,15 @@ class PermutationParameter(Parameter):
             intermediate_value = int(input_value)
 
         if to_type == "string":
-            return self.string_values[intermediate_value]
-        if to_type == "original":
-            return self.permutation_values[intermediate_value]
+            result = self.string_values[intermediate_value]
+        elif to_type == "original": # was "if"
+            result = self.permutation_values[intermediate_value]
         elif to_type == "01":
-            return intermediate_value / (self.get_size() - 1)
+            result = intermediate_value / (self.get_size() - 1)
         else:
-            return intermediate_value
+            result = intermediate_value
+        print(from_type + " -> " + to_type + ": " + str(input_value) + " -> " + str(intermediate_value) + " -> " + str(result))
+        return result
 
 
 class VirtualList(list):
@@ -998,13 +1003,15 @@ class SelectionParameter(Parameter):
         # print("build selecton values")
 
         self.values = VirtualList(self.get_size(), lambda i: self.int_to_original(i))
-        self.val_indices = VirtualList(self.get_size(), lambda i: torch.tensor([i]))
+        self.val_indices = VirtualList(self.get_size(), lambda i: torch.tensor([i], dtype=torch.float64))
         
+        '''
         self.selection_values = []
         for x in range(length[0], length[1] + 1):
             self.selection_values.extend(product(self.symbols, repeat=x))
         
         print(f"Finished: {len(self.selection_values)} elements")
+        '''
 
         '''
         print("selection_values: ")
@@ -1126,7 +1133,7 @@ class SelectionParameter(Parameter):
         '''
         samples = torch.stack([v.sample(size, uniform) for v in self.vars])
         tensor = torch.transpose(samples, 0, 1)
-        return torch.tensor([self.original_to_int(x) for x in tensor])
+        return torch.tensor([self.original_to_int(x) for x in tensor], dtype=torch.float64)
 
     def pdf(self, x_idx: torch.Tensor) -> float:
         """
@@ -1182,22 +1189,24 @@ class SelectionParameter(Parameter):
 
     def string_to_original(self, input_value: str) -> list[int]:
         symbols = input_value.split(", ")
-        return torch.tensor([self.symbols.index(s) for s in symbols])
+        return torch.tensor([self.symbols.index(s) for s in symbols], dtype=torch.float64)
 
     def original_to_string(self, input_value: list[int]) -> str:
         return [self.symbols[s] for s in input_value]
 
     def original_to_int(self, input_value: list[int]) -> int:
-        return sum([input_value[i].item() * (len(self.symbols) ** i) for i in range(len(input_value))])
+        result = sum([input_value[i].item() * (len(self.symbols) ** i) for i in range(len(input_value))])
+        print("original-int: " + str(input_value) + " -> " + str(result))
+        return result
 
     def int_to_original(self, input_value: int) -> list[int]:
         result = []
-        for i in range(len(self.symbols), 0, -1):
+        for i in range(self.length[1]-1, -1, -1): # from length[1]-1 to 0
             div = len(self.symbols) ** i
-            print(str(i) + " " + str(div))
             val = input_value // div
             input_value = input_value % div
             result.append(val)
+        result.reverse()
         return result
 
     # TODO: adjust this -> create internal representation using ints (enumeration of input strings)
@@ -1219,7 +1228,6 @@ class SelectionParameter(Parameter):
         Returns:
             - the converted value
         """
-        print("convert " + str(input_value) + " " + from_type + " " + to_type)
 
         if from_type == "string":
             original = self.string_to_original(input_value)
@@ -1231,13 +1239,16 @@ class SelectionParameter(Parameter):
             original = self.int_to_original(int(round(input_value)))
         
         if to_type == "string":
-            return self.original_to_string(original)
+            result = self.original_to_string(original)
         elif to_type == "original":
-            return original
+            result = original
         elif to_type == "01":
-            return self.original_to_int(original) / (self.get_size()-1)
+            result = self.original_to_int(original) / (self.get_size()-1)
         else:
-            return self.original_to_int(original)
+            result = self.original_to_int(original)
+
+        print(from_type + " -> " + to_type + ": " + str(input_value) + " -> " + str(original) + " -> " + str(result))
+        return result
 
         '''
         if from_type == "string":

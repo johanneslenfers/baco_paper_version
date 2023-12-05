@@ -23,15 +23,20 @@
   "optimization_iterations": 0,
   "input_parameters": {
     "rewriting": {
-        "parameter_type": "selection",
-        "values": ["A", "B", "C"],
-        "length": [1, 5],
-        "parametrization" : "kendall"
+      "parameter_type": "selection",
+      "values": ["A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K", "L", "M", "N", "O", "P", "Q", "R", "S", "T", "U", "V", "W", "X", "Y", "Z"],
+      "length": [1, 10],
+      "parametrization" : "kendall"
     },
     "x": {
       "parameter_type": "real",
       "values" : [0, 10],
       "parameter_default" : 5
+    },
+    "p": {
+      "parameter_type": "permutation",
+      "values": [3],
+      "parametrization": "spearman"
     }
   }
 }
