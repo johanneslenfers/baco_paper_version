@@ -529,7 +529,7 @@
     "optimization_iterations": {
       "default": 50,
       "description": "Usually a number between 1 and 10. Max number of optimization iterations that BaCO can internally perform. We set a max number to limit the execution time of BaCO. Usually a bigger number will give a better accuracy but slower results.",
-      "maximum": 5000,
+      "maximum": 5000000,
       "minimum": 0,
       "type": "integer"
     },
