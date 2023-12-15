@@ -54,12 +54,34 @@ def optimize(settings_file: Union[str, Dict], black_box_function: Optional[Calla
     elif settings["optimization_method"] == "exhaustive":
         from baco.other import exhaustive
         data_array = exhaustive.main(settings, black_box_function=black_box_function)
+
     elif settings["optimization_method"] == "opentuner":
         from baco.other import opentuner_shell
-        args = opentuner_shell.create_namespace(settings)
+        args = opentuner_shell.create_namespace(settings, None, False)
         args.settings = settings
         args.black_box_function = black_box_function
         opentuner_shell.OpentunerShell.main(args)
+    
+    elif settings["optimization_method"] == "opentuner_biased":
+        from baco.other import opentuner_shell
+        args = opentuner_shell.create_namespace(settings, None, True)
+        args.settings = settings
+        args.black_box_function = black_box_function
+        opentuner_shell.OpentunerShell.main(args)
+
+    elif settings["optimization_method"] == "embedding_random_sampling":
+        from baco.other import opentuner_shell
+        args = opentuner_shell.create_namespace(settings, ['PureRandom'], False)
+        args.settings = settings
+        args.black_box_function = black_box_function
+        opentuner_shell.OpentunerShell.main(args)
+
+    elif settings["optimization_method"] == "embedding_random_sampling_biased":
+        from baco.other import opentuner_shell
+        args = opentuner_shell.create_namespace(settings, ['PureRandom'], True)
+        args.settings = settings
+        args.black_box_function = black_box_function
+        opentuner_shell.OpentunerShell.main(args)   
 
     elif settings["optimization_method"] == "ytopt":
         import warnings

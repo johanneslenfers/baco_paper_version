@@ -540,7 +540,10 @@
         "bayesian_optimization",
         "evolutionary_optimization",
         "exhaustive",
-        "opentuner",
+        "embedding_random_sampling", 
+        "embedding_random_sampling_biased", 
+        "opentuner", 
+        "opentuner_biased",
         "ytopt",
         "ytopt_ccs"
       ],
