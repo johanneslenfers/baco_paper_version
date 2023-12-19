@@ -4,7 +4,7 @@
         "doe_type": "random sampling",
         "number_of_samples": 0
     },
-    "hypermapper_mode": {
+    "baco_mode": {
         "mode": "client-server"
     },
     "input_parameters": {
