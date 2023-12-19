@@ -1,0 +1,199 @@
+{
+    "application_name": "mdh_matmul_embedding_random_sampling_biased",
+    "optimization_objectives": ["runtime"],
+    "output_data_file": "/scratch/tmp/hohlmeye/mdh_matmul_m1_embedding_random_sampling_biased_0.csv",
+    "log_file": "/scratch/tmp/hohlmeye/mdh_matmul_m1_embedding_random_sampling_biased_0.log",
+    "feasible_output" : {
+        "enable_feasible_predictor" : true,
+        "name" : "Valid",
+        "true_value" : "True",
+        "false_value" : "False"
+      },
+    "optimization_method": "embedding_random_sampling_biased",
+    "doe_allow_repetitions" : true,
+    "allow_duplicate_samples": true,
+    "optimization_iterations": 5000000,
+    "time_budget": 720,
+
+    "input_parameters" : {
+        "A_CACHE_LCL": {
+            "parameter_type" : "integer",
+            "values" : [0, 1],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "A_CACHE_PRV": {
+            "parameter_type" : "integer",
+            "values" : [0, 1],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "B_CACHE_LCL": {
+            "parameter_type" : "integer",
+            "values" : [0, 1],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "B_CACHE_PRV": {
+            "parameter_type" : "integer",
+            "values" : [0, 1],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "C_CACHE_PRV": {
+            "parameter_type" : "integer",
+            "values" : [0, 1],
+            "constraints" : [],
+            "dependencies" : []
+        },
+
+        "WG_1_OCL_DIM": {
+            "parameter_type" : "integer",
+            "values" : [0, 2],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "WG_2_OCL_DIM": {
+            "parameter_type" : "integer",
+            "values" : [0, 2],
+            "constraints" : ["WG_2_OCL_DIM != WG_1_OCL_DIM"],
+            "dependencies" : ["WG_1_OCL_DIM"]
+        },
+        "WG_3_OCL_DIM": {
+            "parameter_type" : "integer",
+            "values" : [0, 2],
+            "constraints" : ["WG_3_OCL_DIM != WG_1_OCL_DIM", "WG_3_OCL_DIM != WG_2_OCL_DIM"],
+            "dependencies" : ["WG_1_OCL_DIM", "WG_2_OCL_DIM"]
+        },
+
+        "WI_1_OCL_DIM": {
+            "parameter_type" : "integer",
+            "values" : [0, 2],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "WI_2_OCL_DIM": {
+            "parameter_type" : "integer",
+            "values" : [0, 2],
+            "constraints" : ["WI_2_OCL_DIM != WI_1_OCL_DIM"],
+            "dependencies" : ["WI_1_OCL_DIM"]
+        },
+        "WI_3_OCL_DIM": {
+            "parameter_type" : "integer",
+            "values" : [0, 2],
+            "constraints" : ["WI_3_OCL_DIM != WI_1_OCL_DIM", "WI_3_OCL_DIM != WI_2_OCL_DIM"],
+            "dependencies" : ["WI_1_OCL_DIM", "WI_2_OCL_DIM"]
+        },
+        
+        "INPUT_SIZE_1": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "WG_1": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["INPUT_SIZE_1 % WG_1 == 0"],
+            "dependencies" : ["INPUT_SIZE_1"]
+        },
+        "GLB_1": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["(INPUT_SIZE_1 / WG_1) % GLB_1 == 0"],
+            "dependencies" : ["INPUT_SIZE_1", "WG_1"]
+        },
+        "WI_1": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["(INPUT_SIZE_1 / WG_1 / GLB_1) % WI_1 == 0"],
+            "dependencies" : ["INPUT_SIZE_1", "WG_1", "GLB_1"]
+        },
+        "LCL_1": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["(INPUT_SIZE_1 / WG_1 / GLB_1 / WI_1) % LCL_1 == 0"],
+            "dependencies" : ["INPUT_SIZE_1", "WG_1", "GLB_1", "WI_1"]
+        },
+        "PRV_1": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["(INPUT_SIZE_1 / WG_1 / GLB_1 / WI_1 / LCL_1) == PRV_1"],
+            "dependencies" : ["INPUT_SIZE_1", "WG_1", "GLB_1", "WI_1", "LCL_1"]
+        },
+
+        "INPUT_SIZE_2": {
+            "parameter_type" : "integer",
+            "values" : [1000, 1000],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "WG_2": {
+            "parameter_type" : "integer",
+            "values" : [1, 1000],
+            "constraints" : ["INPUT_SIZE_2 % WG_2 == 0"],
+            "dependencies" : ["INPUT_SIZE_2"]
+        },
+        "GLB_2": {
+            "parameter_type" : "integer",
+            "values" : [1, 1000],
+            "constraints" : ["(INPUT_SIZE_2 / WG_2) % GLB_2 == 0"],
+            "dependencies" : ["INPUT_SIZE_2", "WG_2"]
+        },
+        "WI_2": {
+            "parameter_type" : "integer",
+            "values" : [1, 1000],
+            "constraints" : ["(INPUT_SIZE_2 / WG_2 / GLB_2) % WI_2 == 0"],
+            "dependencies" : ["INPUT_SIZE_2", "WG_2", "GLB_2"]
+        },
+        "LCL_2": {
+            "parameter_type" : "integer",
+            "values" : [1, 1000],
+            "constraints" : ["(INPUT_SIZE_2 / WG_2 / GLB_2 / WI_2) % LCL_2 == 0"],
+            "dependencies" : ["INPUT_SIZE_2", "WG_2", "GLB_2", "WI_2"]
+        },
+        "PRV_2": {
+            "parameter_type" : "integer",
+            "values" : [1, 1000],
+            "constraints" : ["(INPUT_SIZE_2 / WG_2 / GLB_2 / WI_2 / LCL_2) == PRV_2"],
+            "dependencies" : ["INPUT_SIZE_2", "WG_2", "GLB_2", "WI_2", "LCL_2"]
+        },
+
+        "INPUT_SIZE_3": {
+            "parameter_type" : "integer",
+            "values" : [2048, 2048],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "WG_3": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["INPUT_SIZE_3 % WG_3 == 0"],
+            "dependencies" : ["INPUT_SIZE_3"]
+        },
+        "GLB_3": {
+            "parameter_type" : "integer",
+            "values" : [1, 2048],
+            "constraints" : ["(INPUT_SIZE_3 / WG_3) % GLB_3 == 0"],
+            "dependencies" : ["INPUT_SIZE_3", "WG_3"]
+        },
+        "WI_3": {
+            "parameter_type" : "integer",
+            "values" : [1, 1],
+            "constraints" : ["(INPUT_SIZE_3 / WG_3 / GLB_3) % WI_3 == 0"],
+            "dependencies" : ["INPUT_SIZE_3", "WG_3", "GLB_3"]
+        },
+        "LCL_3": {
+            "parameter_type" : "integer",
+            "values" : [1, 2048],
+            "constraints" : ["(INPUT_SIZE_3 / WG_3 / GLB_3 / WI_3) % LCL_3 == 0"],
+            "dependencies" : ["INPUT_SIZE_3", "WG_3", "GLB_3", "WI_3"]
+        },
+        "PRV_3": {
+            "parameter_type" : "integer",
+            "values" : [1, 2048],
+            "constraints" : ["(INPUT_SIZE_3 / WG_3 / GLB_3 / WI_3 / LCL_3) == PRV_3"],
+            "dependencies" : ["INPUT_SIZE_3", "WG_3", "GLB_3", "WI_3", "LCL_3"]
+        }
+    }
+}
