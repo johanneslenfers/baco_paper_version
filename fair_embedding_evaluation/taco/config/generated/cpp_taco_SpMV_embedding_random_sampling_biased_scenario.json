@@ -1,0 +1,151 @@
+{
+    "application_name": "cpp_taco_SpMV",
+    "baco_mode": {
+        "mode": "client-server"
+    },
+    "design_of_experiment": {
+        "doe_type": "random sampling",
+        "number_of_samples": 7
+    },
+    "input_parameters": {
+        "chunk_size": {
+            "parameter_default": 16,
+            "parameter_type": "ordinal",
+            "transform": "log",
+            "values": [
+                2,
+                4,
+                8,
+                16,
+                32,
+                64,
+                128,
+                256,
+                512,
+                1024
+            ]
+        },
+        "chunk_size2": {
+            "parameter_default": 16,
+            "parameter_type": "ordinal",
+            "transform": "log",
+            "values": [
+                2,
+                4,
+                8,
+                16,
+                32,
+                64,
+                128,
+                256,
+                512,
+                1024
+            ]
+        },
+        "chunk_size3": {
+            "parameter_default": 16,
+            "parameter_type": "ordinal",
+            "transform": "log",
+            "values": [
+                2,
+                4,
+                8,
+                16,
+                32,
+                64,
+                128,
+                256,
+                512,
+                1024
+            ]
+        },
+        "omp_chunk_size": {
+            "parameter_default": 1,
+            "parameter_type": "ordinal",
+            "transform": "log",
+            "values": [
+                1,
+                2,
+                4,
+                8,
+                16,
+                32,
+                64,
+                128,
+                256
+            ]
+        },
+        "omp_num_threads": {
+            "parameter_default": 32,
+            "parameter_type": "ordinal",
+            "transform": "log",
+            "values": [
+                1,
+                2,
+                4,
+                8,
+                16,
+                32,
+                64
+            ]
+        },
+        "omp_scheduling_type": {
+            "parameter_default": 0,
+            "parameter_type": "ordinal",
+            "values": [
+                0,
+                1
+            ]
+        },
+        "permutation": {
+            "constraints": [
+                "permutation_4 == 4"
+            ],
+            "parameter_default": [
+                0,
+                1,
+                2,
+                3,
+                4
+            ],
+            "parameter_type": "permutation",
+            "parametrization": "spearman",
+            "values": [
+                5
+            ]
+        }
+    },
+    "lengthscale_prior": {
+        "name": "gamma",
+        "parameters": [
+            1.0,
+            0.003
+        ]
+    },
+    "log_file": "experiments/SpMV/cage12/embedding_random_sampling_biased/cpp_taco_SpMV_embedding_random_sampling_biased/log_cpp_taco_SpMV_0.log",
+    "models": {
+        "model": "gaussian_process"
+    },
+    "noise_prior": {
+        "name": "gamma",
+        "parameters": [
+            1.1,
+            0.05
+        ]
+    },
+    "optimization_iterations": 53,
+    "optimization_method": "embedding_random_sampling_biased",
+    "optimization_objectives": [
+        "compute_time"
+    ],
+    "output_data_file": "experiments/SpMV/cage12/embedding_random_sampling_biased/cpp_taco_SpMV_embedding_random_sampling_biased/cpp_taco_SpMV_embedding_random_sampling_biased0_output_data.csv",
+    "outputscale_prior": {
+        "name": "gamma",
+        "parameters": [
+            2.0,
+            0.15
+        ]
+    },
+    "run_directory": "/home/henning/EvaluationBachelorarbeit/taco/build",
+    "time_budget": 1440
+}
