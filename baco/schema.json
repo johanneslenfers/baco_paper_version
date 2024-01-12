@@ -649,6 +649,12 @@
       "minimum": -1,
       "type": "number"
     },
+    "time_budget_cot": {
+      "default" : -1,
+      "description" : "Max number of seconds that BaCO is allowed to build the chain of trees.",
+      "minimum": -1,
+      "type": "number"
+    },
     "timestamp": {
       "default": "Timestamp",
       "description": "Name of timestamp variable, this is a float that represents seconds from the linux epoch. This is useful to track the progress of the new samples over time and for comparison with other approaches than BaCO.",
