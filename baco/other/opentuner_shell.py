@@ -57,78 +57,6 @@ def create_namespace(settings, technique, biased):
 
     return args
 
-class OpentunerShellGrid:
-    def __init__(self, tree: Tree) -> None:
-        self.root = tree.root
-        self.depth = tree.depth
-
-        # initialize empty grid; each list is an axis of the grid 
-        self.grid = []
-        for i in range(self.depth):
-            self.grid.append([])
-
-        # fill the grid from the bottom up
-        for current_level in range(self.depth, 0, -1):
-
-            # special case: leaves of tree -> axis doesn't need bias correction
-            if current_level == self.depth:
-                for node in self._get_nodes_at_treelevel(current_level - 1):
-                    self.grid[current_level - 1].append((np.linspace(0., 1., len(node.get_children()) + 1)).tolist())
-                continue
-            
-            # default case with bias correction
-            for node in self._get_nodes_at_treelevel(current_level -1):
-                sublist = [0]
-                for child_idx, child in enumerate(node.get_children()):
-                    # magic happens here
-                    sublist.append(sublist[child_idx] + self._get_num_leaves(child) / self._get_num_leaves(node))
-                self.grid[current_level - 1].append(sublist)
-
-    def _get_num_leaves(self, node: Node) -> int:
-        children = node.get_children()
-        if not children:
-            return 1
-        else:
-            num = 0
-            for child in children:
-                num += self._get_num_leaves(child)
-            return num
-
-    def _get_nodes_at_treelevel(self, level) -> List[Node]:
-        if level == 0:
-            return [self.root]
-        else:
-            return self._get_nodes_at_treelevel_recursive(level, 1, self.root.get_children())
-
-    def _get_nodes_at_treelevel_recursive(self, level, current_level, nodelist: List[Node]) -> List[Node]:
-        if level == current_level:
-            return nodelist
-        
-        new_nodelist = []
-        for node in nodelist:
-            new_nodelist += node.get_children()
-        return self._get_nodes_at_treelevel_recursive(level, current_level + 1, new_nodelist)
-
-    def getConfig(self, parameters):
-        parameters = list(map(lambda x: x * (1-1e-6), parameters))
-        gridparms = []
-        count = 0
-        for axis_idx, axis in enumerate(self.grid):
-            for idx, (val, val_next) in enumerate(zip(axis[count], (axis[count][1:] + [np.Inf]))):
-                if parameters[axis_idx] >= val and parameters[axis_idx] < val_next:
-                    gridparms.append(idx)
-                    oldcount = count
-                    count = 0
-                    if axis_idx != 0:   
-                        for sub in axis[:oldcount]:
-                            count += len(sub) - 1
-                    count += idx
-                    break
-        node = self.root
-        for i in gridparms:
-            node = node.get_children()[i]
-        return node.get_partial_configuration()
-
 class OpentunerShell(MeasurementInterface):
     def __init__(self, *pargs, **kwargs):
         super(OpentunerShell, self).__init__(*pargs, **kwargs)
@@ -138,7 +66,6 @@ class OpentunerShell(MeasurementInterface):
         self.run_directory = self.args.settings["run_directory"]
         # self.number_of_cpus = self.args.settings["number_of_cpus"]
         self.application_name = self.args.settings["application_name"]
-        self.griddict = {}
         initialize_output_data_file(
             self.args.settings,
             self.param_space.all_names
@@ -217,13 +144,12 @@ class OpentunerShell(MeasurementInterface):
         partial_configurations = []
         parameter_idx = 0
         for tree in self.chain_of_trees.trees:
-            if tree not in self.griddict:
-                self.griddict[tree] = OpentunerShellGrid(tree)
             gridparms = []
             for parm in parameters[parameter_idx : parameter_idx + tree.depth]:
                 gridparms.append(cfg[parm.name])
             parameter_idx += tree.depth
-            partial_configurations.append(self.griddict[tree].getConfig(gridparms))
+            gridparms = list(map(lambda x: x * (1-1e-6), gridparms))
+            partial_configurations.append(tree.get_unbiased_config(gridparms))
         configuration = self.chain_of_trees.to_original_order(torch.cat(partial_configurations))
         return configuration
 

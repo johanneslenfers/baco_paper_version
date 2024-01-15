@@ -44,6 +44,7 @@ class Node:
         self.probability = probability
         self.prior_weighted_probability = prior_weighted_probability
         self.id = None
+        self.num_leaves = None
 
     def get_partial_configuration(self) -> torch.Tensor:
         """
@@ -121,6 +122,21 @@ class Node:
 
     def set_id(self, id):
         self.id = id
+
+    def get_num_leaves(self):
+        if self.num_leaves is None:
+            children = self.get_children()
+            if not children:
+                self.num_leaves = 1
+                return self.num_leaves
+            else:
+                num = 0
+                for child in children:
+                    num += child.get_num_leaves()
+                self.num_leaves = num
+                return self.num_leaves
+        else: 
+            return self.num_leaves
 
 
 class ChainOfTrees:
@@ -443,3 +459,21 @@ class Tree:
                 self.edges += [(parent.get_id(), node_id)]
             node_id += 1
         return self.nodes, self.edges
+
+    def _get_unbiased_config_recursive(self, node: Node, parameters, idx):
+        children = node.get_children()
+        if not children:
+            return node.get_partial_configuration()
+        else:
+            num_parent_leaves = node.get_num_leaves()
+            small_value = 0
+            big_value = 0
+            for child in children:
+                num_child_leaves = child.get_num_leaves()
+                small_value = big_value
+                # bias correction happens here
+                big_value = big_value + num_child_leaves / num_parent_leaves
+                if small_value <= parameters[idx] < big_value:
+                    return self._get_unbiased_config_recursive(child, parameters, idx + 1)
+    def get_unbiased_config(self, parameters):
+        return self._get_unbiased_config_recursive(self.get_root(), parameters, 0)
