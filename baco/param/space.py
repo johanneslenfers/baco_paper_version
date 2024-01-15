@@ -83,6 +83,7 @@ class Space:
             else: 
                 # create cot with time budget 
                 thread = threading.Thread(target=self.process_conditional_space)
+                thread.daemon = True 
                 thread.start()
                 thread.join(timeout=settings["time_budget_cot"])
                 if thread.is_alive():
@@ -98,9 +99,6 @@ class Space:
         )
 
     def process_conditional_space(self): 
-        print(f"process conditional space: ")
-        # todo 
-        # make this a timed section 
 
         cot_order, tree_orders = self.get_cot_order()
         self.chain_of_trees = ChainOfTrees(cot_order, len(cot_order) == self.dimension)
