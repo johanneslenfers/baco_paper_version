@@ -82,8 +82,7 @@ class Space:
                 self.process_conditional_space()
             else: 
                 # create cot with time budget 
-                thread = threading.Thread(target=self.process_conditional_space)
-                thread.daemon = True 
+                thread = threading.Thread(target=self.process_conditional_space, daemon=True)
                 thread.start()
                 thread.join(timeout=settings["time_budget_cot"])
                 if thread.is_alive():
