@@ -1,5 +1,5 @@
 #!/usr/bin/python
-from hypermapper import hypermapper  # noqa
+import run
 from tests.aux.functions import *
 from typing import List
 import numpy as np
@@ -32,7 +32,7 @@ def get_cost_function():
 def run_method(method: str, name: str, cost_function) -> None:
 
     # run method 
-    hypermapper.optimize(f"tests/aux/{name}/{name}_{method}.json", cost_function)
+    run.optimize(f"tests/aux/{name}/{name}_{method}.json", cost_function)
 
     return None
 
