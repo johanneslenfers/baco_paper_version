@@ -4,6 +4,7 @@ from functools import reduce
 from opentuner.measurement import MeasurementInterface
 from opentuner.search.manipulator import ConfigurationManipulator
 from opentuner.search.manipulator import FloatParameter, IntegerParameter, EnumParameter
+import math
 
 import sys
 from types import SimpleNamespace  # to simulate opentuners argparse
@@ -190,7 +191,7 @@ class OpentunerShell(MeasurementInterface):
         ]  # just for better use/readability
         if self.param_space.conditional_space:
             for param_name in json_parameters:
-                manipulator.add_parameter(FloatParameter(param_name, 0, 1))
+                manipulator.add_parameter(FloatParameter(param_name, math.ulp(0.0), 1))
         else:
             for param_name in json_parameters:
                 param_type = json_parameters[param_name]["parameter_type"]
@@ -198,7 +199,7 @@ class OpentunerShell(MeasurementInterface):
                     manipulator.add_parameter(
                         FloatParameter(
                             param_name,
-                            json_parameters[param_name]["values"][0],
+                            json_parameters[param_name]["values"][math.ulp(0.0)],
                             json_parameters[param_name]["values"][1],
                         )
                     )
@@ -206,7 +207,7 @@ class OpentunerShell(MeasurementInterface):
                     manipulator.add_parameter(
                         IntegerParameter(
                             param_name,
-                            json_parameters[param_name]["values"][0],
+                            json_parameters[param_name]["values"][math.ulp(0.0)],
                             json_parameters[param_name]["values"][1],
                         )
                     )
