@@ -4,7 +4,6 @@ from functools import reduce
 from opentuner.measurement import MeasurementInterface
 from opentuner.search.manipulator import ConfigurationManipulator
 from opentuner.search.manipulator import FloatParameter, IntegerParameter, EnumParameter
-import math
 
 import sys
 from types import SimpleNamespace  # to simulate opentuners argparse
@@ -183,15 +182,17 @@ class OpentunerShell(MeasurementInterface):
             )  # if unfeasible, consider an 'ERROR'
         else:
             return opentuner.resultsdb.models.Result(time=y_value)
-
+    # smallest float math.ulp(0.0) = 5e-324
     def manipulator(self):
+        # math.ulp not available in Python 3.8
+        min_pos_float = 5e-324
         manipulator = ConfigurationManipulator()
         json_parameters = self.args.settings[
             "input_parameters"
         ]  # just for better use/readability
         if self.param_space.conditional_space:
             for param_name in json_parameters:
-                manipulator.add_parameter(FloatParameter(param_name, math.ulp(0.0), 1))
+                manipulator.add_parameter(FloatParameter(param_name, min_pos_float, 1))
         else:
             for param_name in json_parameters:
                 param_type = json_parameters[param_name]["parameter_type"]
@@ -199,7 +200,7 @@ class OpentunerShell(MeasurementInterface):
                     manipulator.add_parameter(
                         FloatParameter(
                             param_name,
-                            json_parameters[param_name]["values"][math.ulp(0.0)],
+                            json_parameters[param_name]["values"][min_pos_float],
                             json_parameters[param_name]["values"][1],
                         )
                     )
@@ -207,7 +208,7 @@ class OpentunerShell(MeasurementInterface):
                     manipulator.add_parameter(
                         IntegerParameter(
                             param_name,
-                            json_parameters[param_name]["values"][math.ulp(0.0)],
+                            json_parameters[param_name]["values"][min_pos_float],
                             json_parameters[param_name]["values"][1],
                         )
                     )
