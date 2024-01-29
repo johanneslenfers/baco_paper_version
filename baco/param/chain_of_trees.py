@@ -472,8 +472,8 @@ class Tree:
                 num_child_leaves = child.get_num_leaves()
                 small_value = big_value
                 # bias correction happens here
-                big_value = big_value + num_child_leaves / num_parent_leaves
-                if small_value <= parameters[idx] < big_value:
+                big_value = big_value + num_child_leaves
+                if small_value <= parameters[idx] * num_parent_leaves < big_value:
                     return self._get_unbiased_config_recursive(child, parameters, idx + 1)
     def get_unbiased_config(self, parameters):
         return self._get_unbiased_config_recursive(self.get_root(), parameters, 0)
