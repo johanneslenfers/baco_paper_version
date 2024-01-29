@@ -6,12 +6,12 @@ import numpy as np
 import os, sys
 import matplotlib.pyplot as matplt
 import subprocess
-import tests.aux.mdh_matmul_m16.config_helper as config_helper
+import tests.aux.mdh_conv_n1.config_helper as config_helper
 import mdh_cost_function.mdh_cost_function as cost_function
 
 def prepare_experiment(methods: List[str], name: str) -> None:
 
-    config_helper.createConfigFilesMdh(MATRIX_SIZE[0], MATRIX_SIZE[1], MATRIX_SIZE[2], NUM_OPTIMIZATION_ITERATIONS_PER_RUN, SLURM_ARRAY_TASK_ID, TIME_BUDGET)
+    config_helper.createConfigFilesMdh(INPUT_SIZE[0], INPUT_SIZE[1], INPUT_SIZE[2], INPUT_SIZE[3], INPUT_SIZE[4], INPUT_SIZE[5], INPUT_SIZE[6], NUM_OPTIMIZATION_ITERATIONS_PER_RUN, SLURM_ARRAY_TASK_ID, TIME_BUDGET)
     name = LOCATION + name
     subprocess.run(['mkdir', '-p', name])
 
@@ -25,9 +25,9 @@ def prepare_experiment(methods: List[str], name: str) -> None:
 
 def get_cost_function():
     return cost_function.mdh_cost_function(
-    "/home/h/hohlmeye/evaluation/mdh_matmul_m16/baco_" + SLURM_ARRAY_TASK_ID + "/mdh_cost_function/mdh/cuda/build", 
-    "matmul", 
-    MATRIX_SIZE)
+    "/home/h/hohlmeye/evaluation/mdh_conv_n1/baco_" + SLURM_ARRAY_TASK_ID + "/mdh_cost_function/mdh/cuda/build", 
+    "conv", 
+    INPUT_SIZE)
 
 def run_method(method: str, name: str, cost_function) -> None:
 
@@ -40,10 +40,8 @@ def run_method(method: str, name: str, cost_function) -> None:
 def run_experiment(methods: List[str], name: str) -> None:
     prepare_experiment(methods, name)
     cf = get_cost_function()
-
     for method in methods:
         run_method(method, name, cf)
-
     config_helper.removeConfigFilesMdh()
 
     return None
@@ -51,7 +49,7 @@ def run_experiment(methods: List[str], name: str) -> None:
 
 # add main definition here 
 LOCATION: str = "/scratch/tmp/hohlmeye/"
-MATRIX_SIZE = [16, 1000, 2048] # M, N, K
+INPUT_SIZE = [1, 112, 112, 64, 3, 7, 7] 
 NUM_OPTIMIZATION_ITERATIONS_PER_RUN = 5000000
 # specifies the time budget per run in minutes
 TIME_BUDGET = 12 * 60
@@ -67,4 +65,4 @@ methods: List[str] = [
     'opentuner_biased', # biased 
     ]
 
-run_experiment(methods, "mdh_matmul_m16")
+run_experiment(methods, "mdh_conv_n1")

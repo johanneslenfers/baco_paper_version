@@ -1,8 +1,8 @@
 {
     "application_name": "mdh_matmul_embedding_random_sampling",
     "optimization_objectives": ["runtime"],
-    "output_data_file": "/scratch/tmp/hohlmeye/mdh_matmul_m16_JIT_embedding_random_sampling_slurmArrayTaskId.csv",
-    "log_file": "/scratch/tmp/hohlmeye/mdh_matmul_m16_JIT_embedding_random_sampling_slurmArrayTaskId.log",
+    "output_data_file": "/scratch/tmp/hohlmeye/mdh_matmul_m16_embedding_random_sampling_slurmArrayTaskId.csv",
+    "log_file": "/scratch/tmp/hohlmeye/mdh_matmul_m16_embedding_random_sampling_slurmArrayTaskId.log",
     "feasible_output" : {
         "enable_feasible_predictor" : true,
         "name" : "Valid",

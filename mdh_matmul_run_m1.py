@@ -6,7 +6,7 @@ import numpy as np
 import os, sys
 import matplotlib.pyplot as matplt
 import subprocess
-import tests.aux.mdh_matmul_m16.config_helper as config_helper
+import tests.aux.mdh_matmul_m1.config_helper as config_helper
 import mdh_cost_function.mdh_cost_function as cost_function
 
 def prepare_experiment(methods: List[str], name: str) -> None:
@@ -25,7 +25,7 @@ def prepare_experiment(methods: List[str], name: str) -> None:
 
 def get_cost_function():
     return cost_function.mdh_cost_function(
-    "/home/h/hohlmeye/evaluation/mdh_matmul_m16/baco_" + SLURM_ARRAY_TASK_ID + "/mdh_cost_function/mdh/cuda/build", 
+    "/home/h/hohlmeye/evaluation/mdh_matmul_m1/baco_" + SLURM_ARRAY_TASK_ID + "/mdh_cost_function/mdh/cuda/build", 
     "matmul", 
     MATRIX_SIZE)
 
@@ -51,7 +51,7 @@ def run_experiment(methods: List[str], name: str) -> None:
 
 # add main definition here 
 LOCATION: str = "/scratch/tmp/hohlmeye/"
-MATRIX_SIZE = [16, 1000, 2048] # M, N, K
+MATRIX_SIZE = [1, 1000, 2048] # M, N, K
 NUM_OPTIMIZATION_ITERATIONS_PER_RUN = 5000000
 # specifies the time budget per run in minutes
 TIME_BUDGET = 12 * 60
@@ -67,4 +67,4 @@ methods: List[str] = [
     'opentuner_biased', # biased 
     ]
 
-run_experiment(methods, "mdh_matmul_m16")
+run_experiment(methods, "mdh_matmul_m1")

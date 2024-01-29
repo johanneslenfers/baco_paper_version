@@ -1,15 +1,15 @@
 {
-    "application_name": "mdh_matmul_opentuner",
+    "application_name": "mdh_matmul_embedding_random_sampling_biased",
     "optimization_objectives": ["runtime"],
-    "output_data_file": "/scratch/tmp/hohlmeye/mdh_matmul_m16_opentuner_slurmArrayTaskId.csv",
-    "log_file": "/scratch/tmp/hohlmeye/mdh_matmul_m16_opentuner_slurmArrayTaskId.log",
+    "output_data_file": "/scratch/tmp/hohlmeye/mdh_matmul_m1_embedding_random_sampling_biased_slurmArrayTaskId.csv",
+    "log_file": "/scratch/tmp/hohlmeye/mdh_matmul_m1_embedding_random_sampling_biased_slurmArrayTaskId.log",
     "feasible_output" : {
         "enable_feasible_predictor" : true,
         "name" : "Valid",
         "true_value" : "True",
         "false_value" : "False"
       },
-    "optimization_method": "opentuner",
+    "optimization_method": "embedding_random_sampling_biased",
     "allow_duplicate_samples": true,
     "optimization_iterations": ß,
     "time_budget": timeBudgetVar,

@@ -1,0 +1,28 @@
+{
+    "application_name": "powerOfTwo3D_embedding_biased",
+    "optimization_objectives": ["Value"],
+    "output_data_file": "powerOfTwo3D_embedding_biased.csv",
+    "optimization_method": "embedding_random_sampling_biased",
+    "allow_duplicate_samples": true,
+    "optimization_iterations": 1000,
+    "input_parameters" : {
+        "A": {
+            "parameter_type" : "ordinal",
+            "values" : [1, 2],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "B": {
+            "parameter_type" : "ordinal",
+            "values" : [1, 2],
+            "constraints" : ["A % B == 0"],
+            "dependencies" : ["A"]
+        },
+        "C": {
+            "parameter_type" : "ordinal",
+            "values" : [1, 2],
+            "constraints" : ["B % C == 0"],
+            "dependencies" : ["B"]
+        }
+    }
+}

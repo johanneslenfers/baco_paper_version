@@ -1,0 +1,22 @@
+{
+    "application_name": "powerOfTwo_embedding",
+    "optimization_objectives": ["Value"],
+    "output_data_file": "powerOfTwo_embedding_biased.csv",
+    "optimization_method": "embedding_random_sampling_biased",
+    "allow_duplicate_samples": true,
+    "optimization_iterations": 2000,
+    "input_parameters" : {
+        "A": {
+            "parameter_type" : "ordinal",
+            "values" : [1, 2, 4],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "B": {
+            "parameter_type" : "ordinal",
+            "values" : [1, 2, 4],
+            "constraints" : ["A % B == 0"],
+            "dependencies" : ["A"]
+        }
+    }
+}
