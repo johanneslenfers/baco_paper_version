@@ -1,0 +1,172 @@
+{
+    "application_name": "rewriting",
+    "design_of_experiment": {
+        "doe_type": "random sampling",
+        "number_of_samples": 0
+    },
+    "feasible_output" : {
+      "enable_feasible_predictor" : true,
+      "name" : "valid",
+      "true_value" : "True",
+      "false_value" : "False"
+    },
+    "epsilon_greedy_threshold": 0,
+    "design_of_experiment": {
+        "doe_type": "random sampling",
+        "number_of_samples": 5000
+    },
+    "input_parameters": {
+        "0R": {
+            "parameter_default": "id",
+            "parameter_type": "categorical",
+            "values": [
+                "id",
+                "splitJoin",
+                "fuseReduceMap",
+                "mapGlobal0",
+                "mapGlobal1",
+                "mapSeq",
+                "mapLocal0",
+                "mapLocal1",
+                "mapWorkGroup0",
+                "mapWorkGroup1"
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "0I": {
+            "parameter_default": 0,
+            "parameter_type": "integer",
+            "values": [
+                0, 
+                3
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "1R": {
+            "parameter_default": "id",
+            "parameter_type": "categorical",
+            "values": [
+                "id",
+                "splitJoin",
+                "fuseReduceMap",
+                "mapGlobal0",
+                "mapGlobal1",
+                "mapSeq",
+                "mapLocal0",
+                "mapLocal1",
+                "mapWorkGroup0",
+                "mapWorkGroup1"
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "1I": {
+            "parameter_default": 0,
+            "parameter_type": "integer",
+            "values": [
+                0, 
+                3
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "2R": {
+            "parameter_default": "id",
+            "parameter_type": "categorical",
+            "values": [
+                "id",
+                "splitJoin",
+                "fuseReduceMap",
+                "mapGlobal0",
+                "mapGlobal1",
+                "mapSeq",
+                "mapLocal0",
+                "mapLocal1",
+                "mapWorkGroup0",
+                "mapWorkGroup1"
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "2I": {
+            "parameter_default": 0,
+            "parameter_type": "integer",
+            "values": [
+                0, 
+                3
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "3R": {
+            "parameter_default": "id",
+            "parameter_type": "categorical",
+            "values": [
+                "id",
+                "splitJoin",
+                "fuseReduceMap",
+                "mapGlobal0",
+                "mapGlobal1",
+                "mapSeq",
+                "mapLocal0",
+                "mapLocal1",
+                "mapWorkGroup0",
+                "mapWorkGroup1"
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "3I": {
+            "parameter_default": 0,
+            "parameter_type": "integer",
+            "values": [
+                0, 
+                3
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "4R": {
+            "parameter_default": "id",
+            "parameter_type": "categorical",
+            "values": [
+                "id",
+                "splitJoin",
+                "fuseReduceMap",
+                "mapGlobal0",
+                "mapGlobal1",
+                "mapSeq",
+                "mapLocal0",
+                "mapLocal1",
+                "mapWorkGroup0",
+                "mapWorkGroup1"
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        },
+        "4I": {
+            "parameter_default": 0,
+            "parameter_type": "integer",
+            "values": [
+                0, 
+                3
+            ],
+            "constraints" : [],
+            "dependencies" : []
+        }
+    },
+    "log_transform_output": true,
+    "models": {
+        "model": "gaussian_process"
+    },
+    "optimization_iterations": 0,
+    "optimization_method": "bayesian_optimization",
+    "time_budget" : 1,
+    "optimization_objectives": [
+        "runtime"
+    ],
+    "log_file": "rewrite.log",
+    "output_data_file": "rewrites/rewrite.csv"
+}
