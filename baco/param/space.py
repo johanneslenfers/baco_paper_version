@@ -4,6 +4,7 @@ import itertools
 import re
 import sys
 import time
+import threading
 from typing import Any, Dict, List, Tuple, Callable, Optional
 
 import networkx as nx
@@ -77,19 +78,16 @@ class Space:
         self.normalize_priors = True
 
         if self.conditional_space:
-            cot_order, tree_orders = self.get_cot_order()
-            self.chain_of_trees = ChainOfTrees(cot_order, len(cot_order) == self.dimension)
-            self.create_chain_of_trees(tree_orders)
-
-            # cot_parameters are the constraints which are part of the chain of trees. Floats and variables which have dependencies with float parameters are not.
-            self.cot_parameters = [self.parameters[i] for i in range(self.dimension) if i in cot_order]
-            self.non_cot_parameters = [self.parameters[i] for i in range(self.dimension) if i not in cot_order]
-            cot_ordered_names = [p.name for p in self.cot_parameters] + [p.name for p in self.non_cot_parameters]
-            self.cot_remap = [cot_ordered_names.index(p.name) for p in self.parameters]
-            self.non_cot_constraints = []
-            for p in self.non_cot_parameters:
-                if p.constraints is not None:
-                    self.non_cot_constraints.extend(p.constraints)
+            if settings["time_budget_cot"] < 0:
+                self.process_conditional_space()
+            else: 
+                # create cot with time budget 
+                thread = threading.Thread(target=self.process_conditional_space, daemon=True)
+                thread.start()
+                thread.join(timeout=settings["time_budget_cot"])
+                if thread.is_alive():
+                    print(f"End of Hypermapper")
+                    sys.exit(0)
 
         self.use_gradient_descent = (
                 settings["models"]["model"] == "gaussian_process"
@@ -98,6 +96,22 @@ class Space:
                 and not settings["GP_model"] == "gpy"
                 and self.has_real_parameters
         )
+
+    def process_conditional_space(self): 
+
+        cot_order, tree_orders = self.get_cot_order()
+        self.chain_of_trees = ChainOfTrees(cot_order, len(cot_order) == self.dimension)
+        self.create_chain_of_trees(tree_orders)
+
+        # cot_parameters are the constraints which are part of the chain of trees. Floats and variables which have dependencies with float parameters are not.
+        self.cot_parameters = [self.parameters[i] for i in range(self.dimension) if i in cot_order]
+        self.non_cot_parameters = [self.parameters[i] for i in range(self.dimension) if i not in cot_order]
+        cot_ordered_names = [p.name for p in self.cot_parameters] + [p.name for p in self.non_cot_parameters]
+        self.cot_remap = [cot_ordered_names.index(p.name) for p in self.parameters]
+        self.non_cot_constraints = []
+        for p in self.non_cot_parameters:
+            if p.constraints is not None:
+                self.non_cot_constraints.extend(p.constraints)
 
     def parse_input_parameters(self, input_parameters: Dict):
         """
