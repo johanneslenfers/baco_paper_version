@@ -120,7 +120,7 @@ def optimize(settings_file: Union[str, Dict], black_box_function: Optional[Calla
         else:
             best_point = get_min_configurations(data_array, 1)
         print("Best point found:", best_point)
-    sys.stdout.write_protocol("End of HyperMapper\n")
+    # sys.stdout.write_protocol("End of HyperMapper\n") # warning: this is likely to break client server with RISE/SHINE
 
 
 def main():
