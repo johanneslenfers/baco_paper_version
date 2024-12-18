@@ -162,8 +162,8 @@ def get_dependency_groups(problem_definition: ProblemDefinition) -> List[Depende
 OUTPUT_DIR: str = "example_scenarios/synthetic/sampling_order"
 
 META: Dict[str, Any] = {
-    "iterations" : 10000,
-    "repetitions" : 1,
+    "iterations" : 100,
+    "repetitions" : 10,
 }
 
 @dataclass
@@ -174,14 +174,22 @@ class Benchmark:
 # TODO: refactor this 
 # COST functions 
 
-# ASUM 
-# asum_study: Study = cb.benchmark("asum") # type: ignore
-def asum_cost_function(configuration: Dict[str, Any]) -> float:
+fids_taco: dict[str, int] = {
+    "iterations": 10,
+    "repeats": 5,
+    "wait_between_repeats": 0,
+    "wait_after_run": 10,
+}
 
-    fids_rise: dict[str, Any]= {
-        "iterations": META['iterations'], 
-        "timeouts": 60000
-    }
+fids_rise: dict[str, int] = {
+    "iterations": 10,
+    "timeouts": 60000
+}
+
+
+# ASUM 
+asum_study: Study = cb.benchmark("asum") # type: ignore
+def asum_cost_function(configuration: Dict[str, Any]) -> float:
 
     result: float = float(asum_study.query(configuration, fids_rise)["compute_time"]) # type: ignore
 
@@ -243,11 +251,6 @@ def asum_cost_function(configuration: Dict[str, Any]) -> float:
 kmeans_study: Study = cb.benchmark("kmeans") # type: ignore
 def kmeans_cost_function(configuration: Dict[str, Any]) -> float:
 
-    fids_rise: dict[str, Any] = {
-        "iterations": META['iterations'], 
-        "timeouts": 60000
-    }
-
     result: float = float(kmeans_study.query(configuration, fids_rise)["compute_time"]) # type: ignore 
 
     return result
@@ -255,22 +258,12 @@ def kmeans_cost_function(configuration: Dict[str, Any]) -> float:
 stencil_study: Study = cb.benchmark("stencil") # type: ignore
 def stencil_cost_function(configuration: Dict[str, Any]) -> float:
 
-    fids_rise: dict[str, Any] = {
-        "iterations": META['iterations'], 
-        "timeouts": 60000
-    }
-
     result: float = float(stencil_study.query(configuration, fids_rise)["compute_time"]) # type: ignore
 
     return result
 
 harris_study: Study = cb.benchmark("harris") # type: ignore
 def harris_cost_function(configuration: Dict[str, Any]) -> float:
-
-    fids_rise: dict[str, Any] ={
-        "iterations": META['iterations'], 
-        "timeouts": 60000
-    }
 
     result: float = float(harris_study.query(configuration, fids_rise)["compute_time"]) # type: ignore
 
@@ -281,39 +274,14 @@ def harris_cost_function(configuration: Dict[str, Any]) -> float:
 mttkrp_study: Study = cb.benchmark("mttkrp") # type: ignore
 def mttkrp_cost_function(configuration: Dict[str, Any]) -> float:
 
-    fids_taco: dict[str, int] = {
-        "iterations": 15,
-        "repeats": 5,
-        "wait_after_run": 1,
-        "wait_between_repeats": 1
-    }
-
-    # print(f"configuration: \n")
-    # for elem in configuration:
-    #     print(f"    {elem}: {str(configuration[elem])}")
-
     result: float = float(mttkrp_study.query(configuration, fids_taco)["compute_time"]) # type: ignore
-
-    # print(f"result: {result}")
 
     return result
 
 spmm_study: Study = cb.benchmark("spmm") # type: ignore
 def spmm_cost_function(configuration: Dict[str, Any]) -> float:
 
-    fids_taco: dict[str, int] = {
-        "iterations": 15,
-        "repeats": 5,
-        "wait_after_run": 1,
-        "wait_between_repeats": 1
-    }
-
-    # print(f"configuration: \n")
-    # for elem in configuration:
-    #     print(f"    {elem}: {str(configuration[elem])}")
-
     result: float = float(spmm_study.query(configuration, fids_taco)["compute_time"]) # type: ignore
-    # print(f"result: {result}")
 
     return result
 
@@ -494,7 +462,7 @@ BENCHMARKS: Dict[str, Benchmark] = {
     # "ttv",
 
     # RISE 
-    # "asum" : Benchmark(asum.get_asum_definition(), asum_cost_function),
+    "asum" : Benchmark(asum.get_asum_definition(), asum_cost_function),
     # "harris" : Benchmark(harris.get_harris_definition(), harris_cost_function),
     # "kmeans" : Benchmark(kmeans.get_kmeans_definition(), kmeans_cost_function),
     # "stencil" : Benchmark(stencil.get_stencil_definition(), stencil_cost_function),
@@ -577,6 +545,8 @@ def main() -> None:
 
                     filename: str = f"{folder_path}/order_{number}/{method}/json/order_{number}_iteration_{iteration}.json"
                     save_json(configuration=configuration, file_name=filename) 
+
+                    print(f"running: {benchmark_name} order_{number} {method} iteration_{iteration}")
 
                     run.optimize(filename, BENCHMARKS[benchmark_name].cost_function) # type: ignore 
 
