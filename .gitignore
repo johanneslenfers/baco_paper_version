@@ -1,0 +1,15 @@
+# Python cache files
+__pycache__/
+*.pyc
+
+# Logs and temporary files
+opentuner.db
+opentuner.log
+
+# Build artifacts
+build
+datasets
+
+# OS-specific files
+.DS_Store
+.venv

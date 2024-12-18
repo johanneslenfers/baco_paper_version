@@ -60,7 +60,9 @@ class Space:
         self.constraints = []
 
         self.parse_input_parameters(settings["input_parameters"])
+        self.sampling_order = (settings["sampling_order"])
 
+        # consider the order here 
         self.parameter_names = [parameter.name for parameter in self.parameters]
         self.parameter_indices = {parameter_name: i for i, parameter_name in enumerate(self.parameter_names)}
         self.dimension = len(self.parameters)
@@ -86,7 +88,7 @@ class Space:
                 thread.start()
                 thread.join(timeout=settings["time_budget_cot"])
                 if thread.is_alive():
-                    print(f"End of Hypermapper")
+                    print(f"End of BaCO")
                     sys.exit(0)
 
         self.use_gradient_descent = (
@@ -306,29 +308,69 @@ class Space:
                     if child_node.children:
                         node.add_child(child_node)
 
+
+    # TODO manipulate this here 
+    # allow to inject a parameter order in the config file 
+    # generate config file and start experiment  
+    # are the ints an identifyer of the parameters?  
+
+
     def get_cot_order(self) -> Tuple[List[int], List[List[int]]]:
         """
         Creates dependency graph to find a topological sorting of the parameters.
         """
-        dependency_graph = nx.DiGraph()
-        for parameter in self.parameters:
-            if not isinstance(parameter, RealParameter):
-                dependencies = parameter.get_dependencies()
-                if dependencies is None:
-                    dependency_graph.add_node(parameter.name)
-                else:
-                    for dependency in dependencies:
-                        if not isinstance(self.parameters[self.parameter_names.index(dependency)], RealParameter):
-                            dependency_graph.add_edge(dependency, parameter.name)
+        # print(f"orders: {sum(len(tree) for tree in self.sampling_order)}")
+        # print(f"params: {len(self.parameters)}")
 
-        topological_order = list(nx.topological_sort(dependency_graph))
-        subgraphs = nx.connected_components(dependency_graph.to_undirected())
-        cot_order = []
-        tree_orders = []
-        for subgraph in subgraphs:
-            cot_order += [self.parameter_names.index(p) for p in topological_order if p in subgraph]
-            tree_orders.append([self.parameter_names.index(p) for p in topological_order if p in subgraph])
-        return cot_order, tree_orders
+        if len(self.sampling_order) == 0:
+        # if True:
+            dependency_graph = nx.DiGraph()
+            for parameter in self.parameters:
+                if not isinstance(parameter, RealParameter):
+                    dependencies = parameter.get_dependencies()
+                    if dependencies is None:
+                        dependency_graph.add_node(parameter.name)
+                    else:
+                        for dependency in dependencies:
+                            if not isinstance(self.parameters[self.parameter_names.index(dependency)], RealParameter):
+                                dependency_graph.add_edge(dependency, parameter.name)
+
+            topological_order = list(nx.topological_sort(dependency_graph))
+            subgraphs = nx.connected_components(dependency_graph.to_undirected())
+            cot_order = []
+            tree_orders = []
+            for subgraph in subgraphs:
+                cot_order += [self.parameter_names.index(p) for p in topological_order if p in subgraph]
+                tree_orders.append([self.parameter_names.index(p) for p in topological_order if p in subgraph])
+
+            # print(f"cot_order: {cot_order}")
+            # print(f"tree_orders: {tree_orders}")
+
+            return cot_order, tree_orders
+
+        elif sum(len(tree) for tree in self.sampling_order) == len(self.parameters):
+
+            cot_order = []
+            tree_orders = [] 
+            # print(f"parameters: {self.parameters}")
+            # print(f"parameter_names: {self.parameter_names}")
+            # print(f"parameter_indices: {self.parameter_indices}")
+
+            for tree in self.sampling_order:
+                cot_order += [self.parameter_indices[param] for param in tree]
+                tree_orders.append([self.parameter_indices[param] for param in tree])
+
+            # convert to numbers 
+
+            # print(f"cot_order: {cot_order}")
+            # print(f"tree_orders: {tree_orders}")
+
+            return cot_order, tree_orders
+        else:
+
+            print(f"error: invalid sampling order: {self.sampling_order}")
+            sys.exit(1)
+            return None
 
     def get_space(self) -> torch.Tensor:
         # update
@@ -499,7 +541,8 @@ class Space:
                 beginning_of_time,
                 settings["output_data_file"],
             )
-            self.print_data_array(data_array)
+            # check if this slows down the tuning process
+            # self.print_data_array(data_array)
 
         elif settings["baco_mode"]["mode"] == "client-server":
             print("Running on client-server mode.")
@@ -657,7 +700,7 @@ class Space:
                     ([data_array.feasible_array[i].item()] if data_array.feasible_array.tolist() else []) +
                     [data_array.timestamp_array[i].item()]
             ), sep=",")
-        print()
+        # print()
 
 
     @staticmethod

@@ -5,6 +5,8 @@ from opentuner.measurement import MeasurementInterface
 from opentuner.search.manipulator import ConfigurationManipulator
 from opentuner.search.manipulator import FloatParameter, IntegerParameter, EnumParameter
 
+from collections import deque
+
 import sys
 from types import SimpleNamespace  # to simulate opentuners argparse
 import logging
@@ -16,7 +18,7 @@ from baco.util.file import initialize_output_data_file
 import numpy as np
 import torch
 
-from baco.param.chain_of_trees import Tree, Node
+from baco.param.chain_of_trees import Node, ChainOfTrees
 
 log = logging.getLogger(__name__)
 
@@ -36,7 +38,7 @@ def create_namespace(settings, technique, biased):
     args.pipelining = 0
     args.print_params = False
     args.print_search_space_size = False
-    args.quiet = False
+    args.quiet = True
     args.results_log = None
     args.results_log_details = None
     args.seed_configuration = []
@@ -109,17 +111,67 @@ class OpentunerShell(MeasurementInterface):
         if not self.param_space.evaluate(cfg)[0]:
             return []
         cfg = self.param_space.convert(cfg, "internal", "original")
+
         configuration = {}
         parameter_idx = 0
-        for tree in self.chain_of_trees.trees:
-            node = tree.root
-            while node.children:
-                n_children = len(node.children)
-                child_index, node = [(i, n) for i, n in enumerate(node.children) if n.value == cfg[self.parameter_indices[parameter_idx]]][0]
-                configuration[node.parameter_name] = child_idx/n_children
-                parameter_idx += 1
+        counting: int = 0
 
-        return [configuration]  # opentuner expects a list
+        if self.biased:
+
+            for tree in self.chain_of_trees.trees:
+
+                node = tree.root
+                counting += 1
+
+                while node.children:
+                    n_children = len(node.children)
+
+                    for (i, n) in enumerate(node.children):
+                        if n.value == cfg[0][self.parameter_indices[parameter_idx]]:
+                            child_idx = i
+                            node = n
+                            break
+                    
+                    # check what happens when child_idx is the last index
+                    # get the middle of the interval 
+                    configuration[node.parameter_name] = (child_idx/n_children) + (((child_idx+1)/n_children) - (child_idx/n_children))/2
+                    
+                    # this is minimum of the intervall (just add a tiny bit to the value) 
+                    parameter_idx += 1
+
+            return [configuration]  # opentuner expects a list
+
+        else:
+
+            # add the intervals to the trees
+            self.chain_of_trees.annotate_tree()
+
+            # correct the biased based on the size of the subtrees 
+            for tree in self.chain_of_trees.trees:
+                node = tree.root
+                counting += 1
+
+                while node.children:
+                    n_children = len(node.children)
+
+                    for (i, n) in enumerate(node.children):
+                        if n.value == cfg[0][self.parameter_indices[parameter_idx]]:
+                            child_idx = i
+                            node = n
+                            break
+                    
+                    start: float = node.parent.intervals[child_idx] 
+                    configuration[node.parameter_name] = start
+
+                    # middle point could be an idea 
+                    # middle: float = start - (start - node.parent.intervals[child_idx-1])/2
+
+
+                    
+                    # this is minimum of the intervall (just add a tiny bit to the value) 
+                    parameter_idx += 1
+
+            return [configuration]  # opentuner expects a list
 
 
     def revert_embedding(self, cfg):
@@ -148,8 +200,9 @@ class OpentunerShell(MeasurementInterface):
             for parm in parameters[parameter_idx : parameter_idx + tree.depth]:
                 gridparms.append(cfg[parm.name])
             parameter_idx += tree.depth
-            gridparms = list(map(lambda x: x * (1-1e-6), gridparms))
+            gridparms = list(map(lambda x: x * (1-1e-6), gridparms)) # WARNING: We might run into precision issues here
             partial_configurations.append(tree.get_unbiased_config(gridparms))
+
         configuration = self.chain_of_trees.to_original_order(torch.cat(partial_configurations))
         return configuration
 
@@ -226,3 +279,4 @@ class OpentunerShell(MeasurementInterface):
         called at the end of autotuning with the best resultsdb.models.Configuration
         """
         pass
+

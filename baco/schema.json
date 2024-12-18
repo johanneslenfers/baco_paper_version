@@ -652,6 +652,17 @@
       "minimum": -1,
       "type": "number"
     },
+    "sampling_order" : {
+      "default" : [],
+      "items": {
+        "items": {
+          "type": "string"
+        },
+        "type" : "array"
+      },
+      "type": "array",
+      "description" : "Order in which parameters are sampled"
+    },
     "time_budget_cot": {
       "default" : -1,
       "description" : "Max number of seconds that BaCO is allowed to build the chain of trees.",

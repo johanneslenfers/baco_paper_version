@@ -46,6 +46,9 @@ class Node:
         self.id = None
         self.num_leaves = None
 
+        # these are the weighted probabilites for the children based on the number of children and numbmer of leaves in the subtree 
+        self.intervals: list[float] = []
+
     def get_partial_configuration(self) -> torch.Tensor:
         """
         Get the partial configuration corresponding to the node.
@@ -190,6 +193,39 @@ class ChainOfTrees:
 
     def get_trees(self):
         return self.trees
+    
+    def annotate_tree(self) -> None:
+
+        # traverse tree and set intervals 
+
+        for tree in self.trees:
+            # set initial interval for root node 
+            self.annotate_tree_recursively(tree.get_root())
+
+        return None
+    
+    def annotate_tree_recursively(self, node: Node) -> None:
+
+        # set intervals for node 
+        childidx: int = 0
+
+        interval_offset: float = 0 
+
+        if len(node.children) == 0:
+            node.intervals.append(0)
+
+        for child in node.children:
+
+            # TODO: think about edge cases how do we define the intervals? 
+            interval_offset += child.get_num_leaves()/node.get_num_leaves()
+            node.intervals.append(interval_offset)
+            childidx += 1
+
+        for child in node.children:
+            # if len(child.children) > 0:
+            self.annotate_tree_recursively(child)
+
+        return None
 
     def get_random_configuration(self) -> Dict[str, Any]:
         """
@@ -475,5 +511,6 @@ class Tree:
                 big_value = big_value + num_child_leaves
                 if small_value <= parameters[idx] * num_parent_leaves < big_value:
                     return self._get_unbiased_config_recursive(child, parameters, idx + 1)
+
     def get_unbiased_config(self, parameters):
         return self._get_unbiased_config_recursive(self.get_root(), parameters, 0)
