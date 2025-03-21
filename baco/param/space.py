@@ -243,15 +243,24 @@ class Space:
         Input:
             - dependency_graph: A nx-graph describing the constraint dependencies between variables
         """
+        total_nodes: int = 0
+        total_leaves: int = 0
         for tree_order in tree_orders:
             tree = Tree()
             node = tree.get_root()
+
             build_time_start = time.time()
             self.build_tree(tree, tree.get_root(), torch.Tensor([[float('nan')] * len(tree_order)]), tree_order, -1)
             sys.stdout.write_to_logfile(
                 f"time to build tree: {time.time() - build_time_start}\n"
             )
+
+            total_nodes += tree.get_nodes()
+            total_leaves += len(tree.get_leaves())
+
             sys.stdout.write_to_logfile(f"number of leaves: {len(tree.leaves)}\n")
+            sys.stdout.write_to_logfile(f"number of nodes: {tree.get_nodes()}\n")
+
             propagate_probabilities_time_start = time.time()
             node.propagate_probabilities(self)
             sys.stdout.write_to_logfile(
@@ -261,6 +270,25 @@ class Space:
             tree.depth = len(tree_order)
             if len(tree.get_leaves()) > 0:
                 self.chain_of_trees.add_tree(tree)
+
+        # this is overwritten/mixed with runs for the other orders
+        # therefore, export the numbers to a file 
+        sys.stdout.write_to_logfile(f"total number of leaves: {total_leaves}\n")
+        sys.stdout.write_to_logfile(f"total number of nodes: {total_nodes}\n")
+
+        # open 
+
+        # Sample data
+        data: list[str] = []
+        data.append([str(self.application_name), str(total_nodes), str(total_leaves)])
+
+        # Writing to a CSV file
+        with open('num_nodes.csv', mode='a', newline='') as file:
+            writer = csv.writer(file)
+            
+            # Writing rows
+            for row in data:
+                writer.writerow(row)
 
     def build_tree(
             self,
