@@ -33,10 +33,13 @@ from interopt import Study
 # Only needed since this is in the same repo as schedgehammer.
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
 import catbench as cb
+import time
 ##############################################################
 
 # type to model dependent groups 
 DependencyGroup = Tuple[List[Param], List[Constraint]]
+
+
 
 def get_json_base_config(optimization_method: str, 
                          optimization_iterations: int,
@@ -159,11 +162,18 @@ def get_dependency_groups(problem_definition: ProblemDefinition) -> List[Depende
     return dependency_groups
 
 # set experiment information
-OUTPUT_DIR: str = "example_scenarios/synthetic/sampling_order"
+OUTPUT_DIR_BASE: str = "example_scenarios/synthetic/sampling_order"
+if os.path.isdir(OUTPUT_DIR_BASE):
+    output_dir: str = f"{OUTPUT_DIR_BASE}_{int(time.time())}"
+else:
+    output_dir: str = OUTPUT_DIR_BASE
+os.makedirs(output_dir, exist_ok=True)
+
+OUTPUT_DIR: str = output_dir
 
 META: Dict[str, Any] = {
-    "iterations" : 100,
-    "repetitions" : 10,
+    "iterations" : 5,
+    "repetitions" : 1,
 }
 
 @dataclass
@@ -185,7 +195,6 @@ fids_rise: dict[str, int] = {
     "iterations": 10,
     "timeouts": 60000
 }
-
 
 # ASUM 
 asum_study: Study = cb.benchmark("asum") # type: ignore
@@ -278,12 +287,12 @@ def mttkrp_cost_function(configuration: Dict[str, Any]) -> float:
 
     return result
 
-spmm_study: Study = cb.benchmark("spmm") # type: ignore
-def spmm_cost_function(configuration: Dict[str, Any]) -> float:
+# spmm_study: Study = cb.benchmark("spmm") # type: ignore
+# def spmm_cost_function(configuration: Dict[str, Any]) -> float:
 
-    result: float = float(spmm_study.query(configuration, fids_taco)["compute_time"]) # type: ignore
+#     result: float = float(spmm_study.query(configuration, fids_taco)["compute_time"]) # type: ignore
 
-    return result
+#     return result
 
 
 def generate_valid_orders(parameters: List[List[str]]) -> List[List[List[str]]]:
@@ -458,14 +467,14 @@ BENCHMARKS: Dict[str, Benchmark] = {
     # "spmm": Benchmark(spmm.get_spmm_definition(), spmm_cost_function),
     # "spmv",
     # "sddmm",
-    # "mttkrp": Benchmark(mttkrp.get_mttkrp_definition(), mttkrp_cost_function),
+    "mttkrp": Benchmark(mttkrp.get_mttkrp_definition(), mttkrp_cost_function),
     # "ttv",
 
     # RISE 
     "asum" : Benchmark(asum.get_asum_definition(), asum_cost_function),
-    # "harris" : Benchmark(harris.get_harris_definition(), harris_cost_function),
-    # "kmeans" : Benchmark(kmeans.get_kmeans_definition(), kmeans_cost_function),
-    # "stencil" : Benchmark(stencil.get_stencil_definition(), stencil_cost_function),
+    "kmeans" : Benchmark(kmeans.get_kmeans_definition(), kmeans_cost_function),
+    "stencil" : Benchmark(stencil.get_stencil_definition(), stencil_cost_function),
+    "harris" : Benchmark(harris.get_harris_definition(), harris_cost_function),
 
     # not working  -> model training fails, lookup only is not enough 
     # "scal" : Benchmark(scal.get_scal_definition(), scal_cost_function),
@@ -479,10 +488,83 @@ METHODS: List[str] = [
     "opentuner_biased",
 ]
 
+# put all stats in one global dict 
+Stats: dict[str, Any] = {
+    "methods" : METHODS,
+    "benchmarks" : list(BENCHMARKS.keys()),
+    "iterations" : META['iterations'],
+    "repetitions" : META['repetitions'],
+    "output_dir" : OUTPUT_DIR,
+}
 
-def main() -> None:
+def run_order(benchmark_name: str, 
+              problem_definition: ProblemDefinition,
+              orders: list[list[str]], 
+              constraints: list[str], 
+              number: int,
+              folder_path: str,
+              ) -> None:
 
-    for benchmark_name in BENCHMARKS:
+    constraints_distribution: dict[str, list[str]] = distribute_constraints(constraints=constraints, order=orders)
+
+    for method in METHODS:
+
+        # create output directories 
+        subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}"])
+        subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}/json"])
+        subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}/csv"])
+        subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}/log"])
+
+        for iteration in range(META['repetitions']):
+
+            # generate and save json as input for the optimizer
+            configuration: Dict[str, Any] = generate_json(constraints=constraints_distribution, 
+                                                          order=orders, 
+                                                          parameters=problem_definition.search_space.params,
+                                                          method=method,
+                                                          number=number,
+                                                          benchmark_name=benchmark_name,
+                                                          output_folder=folder_path,
+                                                          iteration=iteration,
+                                                          )
+
+            filename: str = f"{folder_path}/order_{number}/{method}/json/order_{number}_iteration_{iteration}.json"
+            save_json(configuration=configuration, file_name=filename) 
+
+            print(f"running: {benchmark_name} order_{number} {method} iteration_{iteration}")
+
+            run.optimize(filename, BENCHMARKS[benchmark_name].cost_function) # type: ignore 
+
+
+    # plotting for order 
+    data_dirs: List[str] = []
+    labels: List[str] = [] 
+    for method in METHODS:
+        data_dirs.append(f"{folder_path}/order_{number}/{method}/csv")
+        labels.append(f"{method}")
+
+    plot.plot_optimization_results.plot_regret( # type: ignore
+        settings_file=f"{folder_path}/order_{number}/{METHODS[0]}/json/order_{number}_iteration_0.json",
+        data_dirs=data_dirs,
+        labels=labels,
+        minimum=0,
+        outfile=f"{folder_path}/order_{number}/order_{number}.pdf",
+        title=f"{benchmark_name} order_{number}",
+        plot_log=True,
+        unlog_y_axis=False,
+        budget=None,
+        out_dir=f"{folder_path}/order_{number}",
+        ncol=2,
+        x_label=None,
+        y_label=None,
+        show_doe=False,
+        expert_configuration=None,
+    )
+    number += 1  
+
+def run_benchmark(benchmark_name: str) -> None: 
+
+        start_time: float = time.time()
 
         print(f"benchmark_name: {benchmark_name}")
 
@@ -519,63 +601,14 @@ def main() -> None:
         print(f"orders: {len(all_orders)}")
         number: int = 0
         for orders in all_orders:
-
-            constraints_distribution: dict[str, list[str]] = distribute_constraints(constraints=constraints, order=orders)
-
-            for method in METHODS:
-
-                # create output directories 
-                subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}"])
-                subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}/json"])
-                subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}/csv"])
-                subprocess.run(["mkdir", "-p", f"{folder_path}/order_{number}/{method}/log"])
-
-                for iteration in range(META['repetitions']):
-
-                    # generate and save json as input for the optimizer
-                    configuration: Dict[str, Any] = generate_json(constraints=constraints_distribution, 
-                                order=orders, 
-                                parameters=problem_definition.search_space.params,
-                                method=method,
-                                number=number,
-                                benchmark_name=benchmark_name,
-                                output_folder=folder_path,
-                                iteration=iteration,
-                                )
-
-                    filename: str = f"{folder_path}/order_{number}/{method}/json/order_{number}_iteration_{iteration}.json"
-                    save_json(configuration=configuration, file_name=filename) 
-
-                    print(f"running: {benchmark_name} order_{number} {method} iteration_{iteration}")
-
-                    run.optimize(filename, BENCHMARKS[benchmark_name].cost_function) # type: ignore 
-
-
-            # plotting for order 
-            data_dirs: List[str] = []
-            labels: List[str] = [] 
-            for method in METHODS:
-                data_dirs.append(f"{folder_path}/order_{number}/{method}/csv")
-                labels.append(f"{method}")
-
-            plot.plot_optimization_results.plot_regret( # type: ignore
-                settings_file=f"{folder_path}/order_{number}/{METHODS[0]}/json/order_{number}_iteration_0.json",
-                data_dirs=data_dirs,
-                labels=labels,
-                minimum=0,
-                outfile=f"{folder_path}/order_{number}/order_{number}.pdf",
-                title=f"{benchmark_name} order_{number}",
-                plot_log=True,
-                unlog_y_axis=False,
-                budget=None,
-                out_dir=f"{folder_path}/order_{number}",
-                ncol=2,
-                x_label=None,
-                y_label=None,
-                show_doe=False,
-                expert_configuration=None,
-            )
-            number += 1  
+            run_order(benchmark_name=benchmark_name, 
+                      problem_definition=problem_definition,
+                      orders=orders, 
+                      constraints=constraints, 
+                      number=number,
+                      folder_path=folder_path,
+                      )
+            number += 1
 
         # now plot for all methods 
         for method in METHODS:
@@ -605,7 +638,23 @@ def main() -> None:
                 expert_configuration=None,
             )           
 
+        Stats["duration_benchmarks"][benchmark_name] = round(time.time() - start_time, 3)
         # TODO add more plotting 
+
+def main() -> None:
+
+    start_time: float = time.time()
+
+    Stats["duration_benchmarks"] = {}
+    for benchmark_name in BENCHMARKS:
+        run_benchmark(benchmark_name=benchmark_name)
+
+    Stats["duration_total: "] = round(time.time() - start_time, 3)
+
+    # write dict to json file 
+    with open(f"{OUTPUT_DIR}/stats.json", 'w') as file:
+        json.dump(Stats, file, indent=4)
+
 
 if __name__ == "__main__":
     main()
