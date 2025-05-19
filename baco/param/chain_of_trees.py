@@ -45,6 +45,7 @@ class Node:
         self.prior_weighted_probability = prior_weighted_probability
         self.id = None
         self.num_leaves = None
+        self.num_nodes: int | None = None
 
         # these are the weighted probabilites for the children based on the number of children and numbmer of leaves in the subtree 
         self.intervals: list[float] = []
@@ -125,6 +126,23 @@ class Node:
 
     def set_id(self, id):
         self.id = id
+
+    
+    def get_num_nodes(self):
+        if self.num_nodes is None:
+            children = self.get_children()
+            if not children:
+                self.num_nodes = 1
+                return self.num_nodes
+            else:
+                num: int = 1
+                for child in children:
+                    num += child.get_num_nodes()
+                self.num_nodes = num
+                return self.num_nodes
+        else: 
+            return self.num_nodes
+
 
     def get_num_leaves(self):
         if self.num_leaves is None:
@@ -418,6 +436,9 @@ class Tree:
 
     def get_root(self):
         return self.root
+
+    def get_nodes(self):
+        return self.root.get_num_nodes()
 
     def get_leaves(self):
         return self.leaves

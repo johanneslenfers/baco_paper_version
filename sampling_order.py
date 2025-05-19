@@ -29,6 +29,8 @@ from interopt.definition import ProblemDefinition
 from catbench.benchmarks import asum, scal, mm, stencil, kmeans, harris, mttkrp, spmm
 from interopt import Study
 
+# from dummy_experiment import get_dummy_study, get_dummy_definition
+
 
 # Only needed since this is in the same repo as schedgehammer.
 sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
@@ -257,21 +259,31 @@ def asum_cost_function(configuration: Dict[str, Any]) -> float:
 
 #     return result
 
-kmeans_study: Study = cb.benchmark("kmeans") # type: ignore
+# dummy: Study = get_dummy_study("dummy") # type: ignore
+def dummy_cost_function(configuration: Dict[str, Any]) -> float:
+
+    # result: float = float(dummy.query(configuration, fids_rise)["compute_time"]) # type: ignore
+
+    result: float = 0.0
+
+    return result
+
+
+# kmeans_study: Study = cb.benchmark("kmeans") # type: ignore
 def kmeans_cost_function(configuration: Dict[str, Any]) -> float:
 
     result: float = float(kmeans_study.query(configuration, fids_rise)["compute_time"]) # type: ignore 
 
     return result
 
-stencil_study: Study = cb.benchmark("stencil") # type: ignore
+# stencil_study: Study = cb.benchmark("stencil") # type: ignore
 def stencil_cost_function(configuration: Dict[str, Any]) -> float:
 
     result: float = float(stencil_study.query(configuration, fids_rise)["compute_time"]) # type: ignore
 
     return result
 
-harris_study: Study = cb.benchmark("harris") # type: ignore
+# harris_study: Study = cb.benchmark("harris") # type: ignore
 def harris_cost_function(configuration: Dict[str, Any]) -> float:
 
     result: float = float(harris_study.query(configuration, fids_rise)["compute_time"]) # type: ignore
@@ -479,13 +491,16 @@ BENCHMARKS: Dict[str, Benchmark] = {
     # not working  -> model training fails, lookup only is not enough 
     # "scal" : Benchmark(scal.get_scal_definition(), scal_cost_function),
     # "mm":  Benchmark(mm.get_mm_definition(), mm_cost_function),
+
+    # Dummy
+    # "dummy": Benchmark(get_dummy_definition(), dummy_cost_function),
 }
 
 METHODS: List[str] = [
     "embedding_random_sampling",
-    "embedding_random_sampling_biased",
-    "opentuner",
-    "opentuner_biased",
+    # "embedding_random_sampling_biased",
+    # "opentuner",
+    # "opentuner_biased",
 ]
 
 # put all stats in one global dict 
@@ -620,23 +635,23 @@ def run_benchmark(benchmark_name: str) -> None:
                 data_dirs.append(f"{folder_path}/order_{number}/{method}/csv")
                 labels.append(f"order_{number}")
 
-            plot.plot_optimization_results.plot_regret( # type: ignore 
-                settings_file=f"{folder_path}/order_0/{method}/json/order_0_iteration_0.json",
-                data_dirs=data_dirs,
-                labels=labels,
-                minimum=0,
-                outfile=f"{folder_path}/{method}.pdf",
-                title=f"{benchmark_name} {method}",
-                plot_log=True,
-                unlog_y_axis=False,
-                budget=None,
-                out_dir=".",
-                ncol=2,
-                x_label=None,
-                y_label=None,
-                show_doe=False,
-                expert_configuration=None,
-            )           
+            # plot.plot_optimization_results.plot_regret( # type: ignore 
+            #     settings_file=f"{folder_path}/order_0/{method}/json/order_0_iteration_0.json",
+            #     data_dirs=data_dirs,
+            #     labels=labels,
+            #     minimum=0,
+            #     outfile=f"{folder_path}/{method}.pdf",
+            #     title=f"{benchmark_name} {method}",
+            #     plot_log=True,
+            #     unlog_y_axis=False,
+            #     budget=None,
+            #     out_dir=".",
+            #     ncol=2,
+            #     x_label=None,
+            #     y_label=None,
+            #     show_doe=False,
+            #     expert_configuration=None,
+            # )           
 
         Stats["duration_benchmarks"][benchmark_name] = round(time.time() - start_time, 3)
         # TODO add more plotting 
