@@ -1,0 +1,33 @@
+{
+  "application_name": "opentuner",
+  "optimization_objectives": [
+    "runtime"
+  ],
+  "output_data_file": "vanilla_bo/opentuner/opentuner.csv",
+  "log_file": "vanilla_bo/opentuner.log",
+  "epsilon_greedy_threshold": 0,
+  "models": {
+    "model": "random_forest"
+  },
+  "design_of_experiment": {
+    "doe_type" : "random sampling",
+    "number_of_samples": 5
+  },
+  "optimization_method": "opentuner",
+  "optimization_iterations": 100,
+  "time_budget": 10,
+  "input_parameters": {
+    "A": {
+      "parameter_type": "ordinal",
+      "values" : [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024],
+      "constraints" : ["A % B == 0"],
+      "dependencies" : ["B"]
+    },
+    "B": {
+      "parameter_type": "ordinal",
+      "values" : [1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 1024],
+      "constraints" : [],
+      "dependencies" : []
+    }
+  }
+}

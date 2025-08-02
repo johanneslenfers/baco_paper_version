@@ -541,6 +541,7 @@
         "evolutionary_optimization",
         "exhaustive",
         "opentuner",
+        "vanilla_bo",
         "ytopt",
         "ytopt_ccs"
       ],
