@@ -54,12 +54,24 @@ def optimize(settings_file: Union[str, Dict], black_box_function: Optional[Calla
     elif settings["optimization_method"] == "exhaustive":
         from baco.other import exhaustive
         data_array = exhaustive.main(settings, black_box_function=black_box_function)
+
     elif settings["optimization_method"] == "opentuner":
         from baco.other import opentuner_shell
         args = opentuner_shell.create_namespace(settings)
         args.settings = settings
         args.black_box_function = black_box_function
         opentuner_shell.OpentunerShell.main(args)
+
+    elif settings["optimization_method"] == "vanilla_bo":
+        from baco.other.vanilla_bo import BayesianOptimizerShell
+
+        # Initialize
+        bo_shell = BayesianOptimizerShell(settings, black_box_function)
+        # bo_shell.initialize(param_space)
+
+        # Run optimization
+        results = bo_shell.optimize()
+
 
     elif settings["optimization_method"] == "ytopt":
         import warnings
